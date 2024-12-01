@@ -93,4 +93,3 @@ list(
     indegree_share_distribution(
         "produced_images/indegree_share_distribution.png"
     )
-
