@@ -93,3 +93,7 @@ list(
     indegree_share_distribution(
         "produced_images/indegree_share_distribution.png"
     )
+
+# These plots show that, broadly, the concentration of indegrees actually
+# peaked in 2022 and is slightly lower in 2024, more similar to levels in
+# 2020.
