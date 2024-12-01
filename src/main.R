@@ -1,6 +1,7 @@
 library(tidyverse)
 library(purrr)
 
+# Import some utility functions we'll use later.
 source("src/lib/top_n_by_pagerank.R")
 source("src/lib/plot_top_n.R")
 source("src/lib/cumulative_indegree_share_distribution.R")
@@ -19,7 +20,6 @@ source("src/lib/indegree_share_distribution.R")
 #
 # - "indegree_share" refers to the proportion of all edges (excluding
 # parallel edges and loops) that point to this node.
-
 nodes_2018 <- read_csv("data/2018_top_10000_nodes.csv")
 nodes_2020 <- read_csv("data/2020_top_10000_nodes.csv")
 nodes_2022 <- read_csv("data/2022_top_10000_nodes.csv")
