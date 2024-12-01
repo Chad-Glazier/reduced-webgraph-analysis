@@ -1,3 +1,11 @@
+#' This file is where we produce plots to display information about in-degree
+#' distribution and how it's changed from 2018, 2020, 2022, and 2024. We also
+#' track the popularity (in terms of PageRank and in-degree share) of the most
+#' influential websites across those years.
+#'
+#' All CSV files used can be found in a folder called "more_graphs.zip" at
+#' https://drive.google.com/drive/folders/1odjh6_URj1K8rUjA6yI06YoV7yLSN79e?dmr=1&ec=wgc-drive-hero-goto. # nolint
+
 library(tidyverse)
 library(purrr)
 
