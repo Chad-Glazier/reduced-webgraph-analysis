@@ -1,0 +1,339 @@
+---
+title: "rq4"
+author: "Egor Bezriadin, 78634029"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+```{r}
+pagerank_2018 <- read.csv("domain_only_graphs/2018_top_10000_pagerank_nodes.csv")
+pagerank_2024 <- read.csv("domain_only_graphs/2024_top_10000_pagerank_nodes.csv")
+head(pagerank_2018)
+```
+
+## Extract TLDs to a new column
+
+```{r}
+pagerank_2018 <- pagerank_2018 %>%
+  mutate(tld = sub("\\..*", "", domain_name))
+
+pagerank_2024 <- pagerank_2024 %>%
+  mutate(tld = sub("\\..*", "", domain_name))
+head(pagerank_2018)
+```
+
+## Aggregate metrics for TLDs
+
+```{r}
+# Aggregate Pagerank 2018
+tld_summary_2018 <- pagerank_2018 %>%
+  group_by(tld) %>%
+  summarise(
+    total_pagerank = sum(pagerank_score),
+    avg_pagerank = mean(pagerank_score),
+    count = n()
+  ) %>%
+  arrange(desc(total_pagerank))
+
+# Aggregate Pagerank 2024
+tld_summary_2024 <- pagerank_2024 %>%
+  group_by(tld) %>%
+  summarise(
+    total_pagerank = sum(pagerank_score),
+    avg_pagerank = mean(pagerank_score),
+    count = n()
+  ) %>%
+  arrange(desc(total_pagerank))
+```
+
+## Top 20 TLDs
+
+```{r}
+top_20_tlds_2018 <- tld_summary_2018 %>%
+  slice_max(total_pagerank, n = 20)
+
+top_20_tlds_2024 <- tld_summary_2024 %>%
+  slice_max(total_pagerank, n = 20)
+
+print(top_20_tlds_2018)
+print(top_20_tlds_2024)
+```
+
+## Compare key metrics between 2018 and 2024
+
+```{r}
+tld_comparison <- tld_summary_2018 %>%
+  inner_join(tld_summary_2024, by = "tld", suffix = c("_2018", "_2024")) %>%
+  mutate(
+    change_total_pagerank = total_pagerank_2024 - total_pagerank_2018,
+    change_avg_pagerank = avg_pagerank_2024 - avg_pagerank_2018,
+    change_count = count_2024 - count_2018
+  )
+
+# Sort by the largest change in total Pagerank
+tld_comparison <- tld_comparison %>%
+  arrange(desc(change_total_pagerank))
+
+print(tld_comparison)
+```
+
+## Find emerging / declining
+
+```{r}
+emerging_tlds <- tld_comparison %>%
+  filter(change_total_pagerank > 0.005)
+
+declining_tlds <- tld_comparison %>%
+  filter(change_total_pagerank < -0.005)
+
+print(emerging_tlds)
+print(declining_tlds)
+```
+
+.net emerging, .ru / .su declining
+
+Usage and connectivity with edges
+
+```{r}
+# LONG RUN
+# Load edge data for 2018 and 2024
+edges_2018 <- read.csv("domain_only_graphs/2018_top_10000_pagerank_edges.csv")
+edges_2024 <- read.csv("domain_only_graphs/2024_top_10000_pagerank_edges.csv")
+
+edges_2018 <- edges_2018 %>%
+  mutate(
+    from_tld = sub("\\..*", "", from_domain),
+    to_tld = sub("\\..*", "", to_domain)
+  )
+
+edges_2024 <- edges_2024 %>%
+  mutate(
+    from_tld = sub("\\..*", "", from_domain),
+    to_tld = sub("\\..*", "", to_domain)
+  )
+
+# Filter for connections involving .net and .ru in both years
+net_edges_2018 <- edges_2018 %>%
+  filter(from_tld == "net" | to_tld == "net")
+
+net_edges_2024 <- edges_2024 %>%
+  filter(from_tld == "net" | to_tld == "net")
+
+ru_edges_2018 <- edges_2018 %>%
+  filter(from_tld == "ru" | to_tld == "ru")
+
+ru_edges_2024 <- edges_2024 %>%
+  filter(from_tld == "ru" | to_tld == "ru")
+```
+
+```{r}
+connectivity_summary <- data.frame(
+  tld = c("net", "ru"),
+  connections_2018 = c(nrow(net_edges_2018), nrow(ru_edges_2018)),
+  connections_2024 = c(nrow(net_edges_2024), nrow(ru_edges_2024))
+)
+
+# Bar plot for connectivity
+ggplot(connectivity_summary, aes(x = tld)) +
+  geom_bar(aes(y = connections_2018, fill = "2018"), stat = "identity", position = "dodge") +
+  geom_bar(aes(y = connections_2024, fill = "2024"), stat = "identity", position = "dodge") +
+  labs(
+    title = "Connectivity Trends for .net and .ru (2018 vs. 2024)",
+    x = "TLD",
+    y = "Number of Connections"
+  ) +
+  theme_minimal()
+```
+
+Category relationships
+
+```{r}
+# Top TLD connections for .net and .ru
+top_connections_net_2018 <- net_edges_2018 %>%
+  count(to_tld, sort = TRUE)
+
+top_connections_ru_2018 <- ru_edges_2018 %>%
+  count(to_tld, sort = TRUE)
+
+top_connections_net_2024 <- net_edges_2024 %>%
+  count(to_tld, sort = TRUE)
+
+top_connections_ru_2024 <- ru_edges_2024 %>%
+  count(to_tld, sort = TRUE)
+
+print(top_connections_net_2018)
+print(top_connections_ru_2018)
+print(top_connections_net_2024)
+print(top_connections_ru_2024)
+```
+
+## Updated Declining List
+
+```{r}
+# Filter edges for new declining TLDs
+cn_edges_2018 <- edges_2018 %>% filter(from_tld == "cn" | to_tld == "cn")
+cn_edges_2024 <- edges_2024 %>% filter(from_tld == "cn" | to_tld == "cn")
+
+com_edges_2018 <- edges_2018 %>% filter(from_tld == "com" | to_tld == "com")
+com_edges_2024 <- edges_2024 %>% filter(from_tld == "com" | to_tld == "com")
+
+us_edges_2018 <- edges_2018 %>% filter(from_tld == "us" | to_tld == "us")
+us_edges_2024 <- edges_2024 %>% filter(from_tld == "us" | to_tld == "us")
+
+declining_connectivity <- data.frame(
+  tld = c("cn", "com", "us", "ru"),
+  connections_2018 = c(
+    nrow(cn_edges_2018),
+    nrow(com_edges_2018),
+    nrow(us_edges_2018),
+    nrow(ru_edges_2018)
+  ),
+  connections_2024 = c(
+    nrow(cn_edges_2024),
+    nrow(com_edges_2024),
+    nrow(us_edges_2024),
+    nrow(ru_edges_2024)
+  )
+)
+
+print(declining_connectivity)
+```
+
+## Top connections for declining
+
+```{r}
+top_connections_cn_2018 <- cn_edges_2018 %>% count(to_tld, sort = TRUE)
+top_connections_cn_2024 <- cn_edges_2024 %>% count(to_tld, sort = TRUE)
+
+top_connections_com_2018 <- com_edges_2018 %>% count(to_tld, sort = TRUE)
+top_connections_com_2024 <- com_edges_2024 %>% count(to_tld, sort = TRUE)
+
+top_connections_us_2018 <- us_edges_2018 %>% count(to_tld, sort = TRUE)
+top_connections_us_2024 <- us_edges_2024 %>% count(to_tld, sort = TRUE)
+
+print(top_connections_cn_2018)
+print(top_connections_cn_2024)
+
+print(top_connections_com_2018)
+print(top_connections_com_2024)
+
+print(top_connections_us_2018)
+print(top_connections_us_2024)
+```
+
+## Declining TLDs Graph
+
+```{r}
+declining_connectivity_long <- declining_connectivity %>%
+  pivot_longer(cols = starts_with("connections"), names_to = "year", values_to = "connections") %>%
+  mutate(year = ifelse(year == "connections_2018", "2018", "2024"))
+
+ggplot(declining_connectivity_long, aes(x = reorder(tld, -connections), y = connections, fill = year)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Connectivity Trends for Declining TLDs (2018 vs. 2024)",
+    x = "TLD",
+    y = "Number of Connections"
+  ) +
+  theme_minimal()
+```
+
+## Extra: Shifts in connection types
+
+```{r}
+# Group connections by categories (chosen arbitrarily)
+connections_by_category <- function(edge_data, year) {
+  edge_data %>%
+    mutate(
+      category = case_when(
+        to_tld %in% c("gov", "edu") ~ "Government / Education",
+        to_tld %in% c("com", "net", "org") ~ "Commercial / Infrastructure",
+        TRUE ~ "Other"
+      )
+    ) %>%
+    group_by(category) %>%
+    summarise(total_connections = n()) %>%
+    mutate(year = year)
+}
+
+# Apply to 2018 and 2024 data for .com
+com_connections_by_category_2018 <- connections_by_category(com_edges_2018, "2018")
+com_connections_by_category_2024 <- connections_by_category(com_edges_2024, "2024")
+
+com_connections_category <- bind_rows(com_connections_by_category_2018, com_connections_by_category_2024)
+
+ggplot(com_connections_category, aes(x = year, y = total_connections, fill = category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Shifts in `.com` Connections by Category (2018 vs. 2024)",
+    x = "Year",
+    y = "Total Connections"
+  ) +
+  theme_minimal()
+```
+
+## Extra: Emerging connections
+
+```{r}
+# Cross-connections between declining and emerging TLDs
+cross_connections <- edges_2024 %>%
+  filter(from_tld %in% c("ru", "cn", "us", "com") & to_tld == "net") %>%
+  count(from_tld, to_tld, sort = TRUE)
+
+print(cross_connections)
+```
+
+```{r}
+# Filter edges with destination `.net` in 2024
+emerging_connections_to_net <- edges_2024 %>%
+  filter(to_tld == "net") %>%
+  count(from_tld, to_tld, sort = TRUE)
+
+emerging_connections_to_net <- emerging_connections_to_net %>%
+  rename(
+    source_tld = from_tld,
+    target_tld = to_tld,
+    connection_count = n
+  )
+
+print(emerging_connections_to_net)
+```
+
+```{r}
+# Summarize connections for each TLD 2018
+connections_2018_summary <- edges_2018 %>%
+  mutate(from_tld = sub("\\..*", "", from_domain)) %>%
+  mutate(to_tld = sub("\\..*", "", to_domain)) %>%
+  group_by(from_tld) %>%
+  summarise(connections_2018 = n()) %>%
+  arrange(desc(connections_2018))
+
+# Summarize connections for each TLD 2024
+connections_2024_summary <- edges_2024 %>%
+  mutate(from_tld = sub("\\..*", "", from_domain)) %>%
+  mutate(to_tld = sub("\\..*", "", to_domain)) %>%
+  group_by(from_tld) %>%
+  summarise(connections_2024 = n()) %>%
+  arrange(desc(connections_2024))
+
+tld_connectivity_summary <- connections_2018_summary %>%
+  full_join(connections_2024_summary, by = "from_tld") %>%
+  mutate(
+    connections_2018 = replace_na(connections_2018, 0),
+    connections_2024 = replace_na(connections_2024, 0),
+    percentage_change = ((connections_2024 - connections_2018) / connections_2018) * 100
+  ) %>%
+  arrange(desc(connections_2018))
+
+print(tld_connectivity_summary)
+```
