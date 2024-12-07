@@ -9,8 +9,6 @@
 #' https://drive.google.com/drive/folders/1odjh6_URj1K8rUjA6yI06YoV7yLSN79e?dmr=1&ec=wgc-drive-hero-goto. # nolint
 #' Begin by putting those files into the top-level `data` directory, then
 #' you may run this code.
-#'
-#' @author Chad Glazier (Student No. 96999370)
 library(tidyverse)
 library(purrr)
 
