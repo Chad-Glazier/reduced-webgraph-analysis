@@ -1,3 +1,6 @@
+#' This file is used to complete the analysis for research question 5, and
+#' should be run after the pt1 file.
+
 ########################----Popular but Not in Emerging Nodes----########################
 
 common_nodes <- merge(emerging_nodes_2018, popular_nodes_2024, by = "domain")

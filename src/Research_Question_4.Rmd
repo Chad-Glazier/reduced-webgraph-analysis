@@ -16,8 +16,8 @@ library(ggplot2)
 ```
 
 ```{r}
-pagerank_2018 <- read.csv("domain_only_graphs/2018_top_10000_pagerank_nodes.csv")
-pagerank_2024 <- read.csv("domain_only_graphs/2024_top_10000_pagerank_nodes.csv")
+pagerank_2018 <- read.csv("data/2018_top_10000_pagerank_nodes.csv")
+pagerank_2024 <- read.csv("data/2024_top_10000_pagerank_nodes.csv")
 head(pagerank_2018)
 ```
 
@@ -107,8 +107,8 @@ Usage and connectivity with edges
 ```{r}
 # LONG RUN
 # Load edge data for 2018 and 2024
-edges_2018 <- read.csv("domain_only_graphs/2018_top_10000_pagerank_edges.csv")
-edges_2024 <- read.csv("domain_only_graphs/2024_top_10000_pagerank_edges.csv")
+edges_2018 <- read.csv("data/2018_top_10000_pagerank_edges.csv")
+edges_2024 <- read.csv("data/2024_top_10000_pagerank_edges.csv")
 
 edges_2018 <- edges_2018 %>%
   mutate(

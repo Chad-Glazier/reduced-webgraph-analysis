@@ -1,5 +1,12 @@
-
-install.packages("igraph")
+#' This file is used to perform part of the analysis to answer research
+#' question 5. This one loads the CSV files, so it should be run before
+#' the second part.
+#'
+#' All CSV files used can be found in a folder called "domain_only_graphs.zip"
+#' at
+#' https://drive.google.com/drive/folders/1odjh6_URj1K8rUjA6yI06YoV7yLSN79e?dmr=1&ec=wgc-drive-hero-goto. # nolint
+#' Begin by putting those files into the top-level `data` directory, then
+#' you may run this code.
 library(igraph)
 
 ########################----Loading Nodes----########################
